@@ -12,7 +12,18 @@ import {
   CHANGE_OUTPUT
 } from './Board.constants';
 
-const [...boards] = defaultBoards.advanced;
+// const [...boards] = defaultBoards.advanced;
+// TODO: delete after Microsoft Build 2018 conference
+const msBuildDemoBoards = [
+  {
+    id: 'root',
+    nameKey: 'cboard.board.home',
+    tiles: []
+  }
+];
+
+const boards = msBuildDemoBoards;
+
 const rootBoardId = 'root';
 const initialState = {
   boards,
