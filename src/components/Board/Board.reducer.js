@@ -15,11 +15,36 @@ import {
 // const [...boards] = defaultBoards.advanced;
 // TODO: delete after Microsoft Build 2018 conference
 const msBuildDemoBoards = [
-  {
-    id: 'root',
-    nameKey: 'cboard.board.home',
-    tiles: []
-  }
+   {
+      "id": "root",
+      "nameKey": "cboard.board.home",
+      "tiles": [
+        {
+          "labelKey": "cboard.vocalization.myNameIsAmberley",
+          "vocalizationKey": "cboard.vocalization.myNameIsAmberley",
+          "image": "symbols/mulberry/correct.svg",
+          "id": "HsVQfR9pX5F-"
+        },
+        {
+          "labelKey": "cboard.vocalization.niceToMeetYou",
+          "vocalizationKey": "cboard.vocalization.niceToMeetYou",
+          "image": "symbols/mulberry/no.svg",
+          "id": "SkBQMRqpX5t-"
+        },
+        {
+          "labelKey": "cboard.vocalization.iHadAGreatTime",
+          "vocalizationKey": "cboard.vocalization.iHadAGreatTime",
+          "image": "symbols/cboard/speech_bubble.svg",
+          "id": "S1LdsadQGA9p7qK-"
+        },
+        {
+          "labelKey": "cboard.vocalization.iHadAnAwfulTime",
+          "vocalizationKey": "cboard.vocalization.iHadAnAwfulTime",
+          "image": "symbols/cboard/speech_bubble.svg",
+          "id": "S1LQGA9p7qK-"
+        }
+      ]
+    }
 ];
 
 const boards = msBuildDemoBoards;
