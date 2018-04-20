@@ -20,6 +20,12 @@ const msBuildDemoBoards = [
       "nameKey": "cboard.board.home",
       "tiles": [
         {
+          "label": "hello",
+          "labelKey": "symbol.communicationConversation.hello",
+          "image": "symbols/mulberry/hello.svg",
+          "id": "Syh9hhU2M"
+        },
+        {
           "labelKey": "cboard.vocalization.myNameIsAmberley",
           "vocalizationKey": "cboard.vocalization.myNameIsAmberley",
           "image":
