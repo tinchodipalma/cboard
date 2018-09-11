@@ -2,7 +2,7 @@ import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { injectIntl, intlShape } from 'react-intl';
-
+import domtoimage from 'dom-to-image';
 import {
   showNotification,
   hideNotification
@@ -15,6 +15,7 @@ import {
 import {
   addBoards,
   changeBoard,
+  replaceBoard,
   previousBoard,
   createBoard,
   createTile,
@@ -23,10 +24,15 @@ import {
   focusTile,
   changeOutput
 } from './Board.actions';
+import {
+  upsertCommunicator,
+  changeCommunicator
+} from '../Communicator/Communicator.actions';
 import TileEditor from './TileEditor';
 import messages from './Board.messages';
 import Board from './Board.component';
 import API from '../../api';
+import { dataURLtoFile } from './Board.helpers';
 
 export class BoardContainer extends Component {
   static propTypes = {
@@ -99,6 +105,7 @@ export class BoardContainer extends Component {
     deactivateScanner: PropTypes.func,
     displaySettings: PropTypes.object,
     navigationSettings: PropTypes.object,
+    userData: PropTypes.object,
     scannerSettings: PropTypes.object
   };
 
@@ -224,6 +231,91 @@ export class BoardContainer extends Component {
 
     return translatedBoard;
   }
+
+  async captureBoardScreenshot() {
+    const node = document.getElementById('BoardTilesContainer').firstChild;
+    let dataURL = null;
+    try {
+      dataURL = await domtoimage.toPng(node);
+    } catch (e) {}
+
+    return dataURL;
+  }
+
+  async uploadBoardScreenshot(dataURL) {
+    const filename = `${this.state.translatedBoard.name ||
+      this.state.translatedBoard.id}.png`;
+    const file = dataURLtoFile(dataURL, filename);
+
+    let url = null;
+    try {
+      url = await API.uploadFile(file, filename);
+    } catch (e) {}
+
+    return url;
+  }
+
+  async updateBoardScreenshot() {
+    let url = null;
+    const dataURL = await this.captureBoardScreenshot();
+    if (dataURL && dataURL !== 'data:,') {
+      url = await this.uploadBoardScreenshot(dataURL);
+    }
+
+    return url;
+  }
+
+  handleSaveBoardClick = async () => {
+    const { userData } = this.props;
+    const prevBoard = this.state.translatedBoard;
+    let boardData = prevBoard;
+    let action = 'updateBoard';
+    if (boardData.email !== userData.email) {
+      const { email, name: author } = userData;
+      boardData = {
+        ...prevBoard,
+        email,
+        author,
+        isPublic: false
+      };
+      action = 'createBoard';
+    }
+
+    const caption = await this.updateBoardScreenshot();
+    if (caption) {
+      boardData.caption = caption;
+    }
+
+    boardData.locale = this.props.intl.locale;
+
+    const boardResponse = await API[action](boardData);
+
+    this.props.replaceBoard(prevBoard, boardResponse);
+    if (boardResponse.id !== prevBoard.id) {
+      this.props.history.replace(`/board/${boardResponse.id}`);
+
+      const communicator = { ...this.props.communicator };
+      const { boards } = communicator;
+      const prevBoardIndex = boards.findIndex(bId => bId === prevBoard.id);
+
+      if (prevBoardIndex >= 0) {
+        boards[prevBoardIndex] = boardResponse.id;
+        communicator.boards = boards;
+      }
+
+      if (communicator.activeBoardId === prevBoard.id) {
+        communicator.activeBoardId = boardResponse.id;
+      }
+
+      if (communicator.rootBoard === prevBoard.id) {
+        communicator.rootBoard = boardResponse.id;
+      }
+
+      const communicatorData = await API.updateCommunicator(communicator);
+      this.props.upsertCommunicator(communicatorData);
+      this.props.changeCommunicator(communicatorData.id);
+    }
+  };
 
   handleEditClick = () => {
     this.setState({ tileEditorOpen: true });
@@ -380,6 +472,7 @@ export class BoardContainer extends Component {
           onAddClick={this.handleAddClick}
           onDeleteClick={this.handleDeleteClick}
           onEditClick={this.handleEditClick}
+          onSaveBoardClick={this.handleSaveBoardClick}
           onFocusTile={focusTile}
           onLockClick={this.handleLockClick}
           onLockNotify={this.handleLockNotify}
@@ -409,7 +502,7 @@ const mapStateToProps = ({
   communicator,
   language,
   scanner,
-  app: { displaySettings, navigationSettings }
+  app: { displaySettings, navigationSettings, userData }
 }) => {
   const activeCommunicatorId = communicator.activeCommunicatorId;
   const currentCommunicator = communicator.communicators.find(
@@ -426,13 +519,15 @@ const mapStateToProps = ({
     scannerSettings: scanner,
     navHistory: board.navHistory,
     displaySettings,
-    navigationSettings
+    navigationSettings,
+    userData
   };
 };
 
 const mapDispatchToProps = {
   addBoards,
   changeBoard,
+  replaceBoard,
   previousBoard,
   createBoard,
   createTile,
@@ -444,7 +539,9 @@ const mapDispatchToProps = {
   cancelSpeech,
   showNotification,
   hideNotification,
-  deactivateScanner
+  deactivateScanner,
+  upsertCommunicator,
+  changeCommunicator
 };
 
 export default connect(
