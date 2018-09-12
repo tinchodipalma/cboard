@@ -127,17 +127,15 @@ export class BoardContainer extends Component {
 
     const { board, boards, communicator, changeBoard, addBoards } = this.props;
     if (!board || (id && board.id !== id)) {
-      let boardId = communicator.rootBoard;
-      const boardExists = boards.find(b => b.id === id);
-
+      let boardId = id || communicator.rootBoard;
+      const boardExists = boards.find(b => b.id === boardId);
       if (boardExists) {
         boardId = boardExists.id;
-      } else if (id) {
+      } else if (boardId) {
         try {
-          const boardFromAPI = await API.getBoard(id);
+          const boardFromAPI = await API.getBoard(boardId);
           boardFromAPI.fromAPI = true;
           addBoards([boardFromAPI]);
-          boardId = id;
         } catch (e) {}
       }
 
@@ -467,6 +465,7 @@ export class BoardContainer extends Component {
           scannerSettings={this.props.scannerSettings}
           deactivateScanner={this.props.deactivateScanner}
           disableBackButton={disableBackButton}
+          userData={this.props.userData}
           isLocked={this.state.isLocked}
           isSelecting={this.state.isSelecting}
           onAddClick={this.handleAddClick}
